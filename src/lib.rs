@@ -125,8 +125,14 @@ extern crate stdweb;
 
 pub use samples_formats::{Sample, SampleFormat};
 
-#[cfg(not(any(windows, target_os = "linux", target_os = "freebsd",
-              target_os = "macos", target_os = "ios", target_os = "emscripten")))]
+#[cfg(not(any(
+    windows,
+    target_os = "linux",
+    target_os = "freebsd",
+    target_os = "macos",
+    target_os = "ios",
+    target_os = "emscripten"
+)))]
 use null as cpal_impl;
 
 use std::error::Error;
@@ -198,12 +204,8 @@ pub struct SupportedFormat {
 
 /// Stream data passed to the `EventLoop::run` callback.
 pub enum StreamData<'a> {
-    Input {
-        buffer: UnknownTypeInputBuffer<'a>,
-    },
-    Output {
-        buffer: UnknownTypeOutputBuffer<'a>,
-    },
+    Input { buffer: UnknownTypeInputBuffer<'a> },
+    Output { buffer: UnknownTypeOutputBuffer<'a> },
 }
 
 /// Represents a buffer containing audio data that may be read.
@@ -325,7 +327,8 @@ pub fn devices() -> Devices {
 /// Can be empty if the system does not support audio input.
 pub fn input_devices() -> InputDevices {
     fn supports_input(device: &Device) -> bool {
-        device.supported_input_formats()
+        device
+            .supported_input_formats()
             .map(|mut iter| iter.next().is_some())
             .unwrap_or(false)
     }
@@ -338,7 +341,8 @@ pub fn input_devices() -> InputDevices {
 /// Can be empty if the system does not support audio output.
 pub fn output_devices() -> OutputDevices {
     fn supports_output(device: &Device) -> bool {
-        device.supported_output_formats()
+        device
+            .supported_output_formats()
             .map(|mut iter| iter.next().is_some())
             .unwrap_or(false)
     }
@@ -370,7 +374,9 @@ impl Device {
     ///
     /// Can return an error if the device is no longer valid (eg. it has been disconnected).
     #[inline]
-    pub fn supported_input_formats(&self) -> Result<SupportedInputFormats, FormatsEnumerationError> {
+    pub fn supported_input_formats(
+        &self,
+    ) -> Result<SupportedInputFormats, FormatsEnumerationError> {
         Ok(SupportedInputFormats(self.0.supported_input_formats()?))
     }
 
@@ -378,7 +384,9 @@ impl Device {
     ///
     /// Can return an error if the device is no longer valid (eg. it has been disconnected).
     #[inline]
-    pub fn supported_output_formats(&self) -> Result<SupportedOutputFormats, FormatsEnumerationError> {
+    pub fn supported_output_formats(
+        &self,
+    ) -> Result<SupportedOutputFormats, FormatsEnumerationError> {
         Ok(SupportedOutputFormats(self.0.supported_output_formats()?))
     }
 
@@ -416,11 +424,8 @@ impl EventLoop {
     /// supported by the device.
     #[inline]
     pub fn build_input_stream(
-        &self,
-        device: &Device,
-        format: &Format,
-    ) -> Result<StreamId, CreationError>
-    {
+        &self, device: &Device, format: &Format,
+    ) -> Result<StreamId, CreationError> {
         self.0.build_input_stream(&device.0, format).map(StreamId)
     }
 
@@ -432,11 +437,8 @@ impl EventLoop {
     /// supported by the device.
     #[inline]
     pub fn build_output_stream(
-        &self,
-        device: &Device,
-        format: &Format,
-    ) -> Result<StreamId, CreationError>
-    {
+        &self, device: &Device, format: &Format,
+    ) -> Result<StreamId, CreationError> {
         self.0.build_output_stream(&device.0, format).map(StreamId)
     }
 
@@ -490,7 +492,8 @@ impl EventLoop {
     /// You can call the other methods of `EventLoop` without getting a deadlock.
     #[inline]
     pub fn run<F>(&self, mut callback: F) -> !
-        where F: FnMut(StreamId, StreamData) + Send
+    where
+        F: FnMut(StreamId, StreamData) + Send,
     {
         self.0.run(move |id, data| callback(StreamId(id), data))
     }
@@ -566,10 +569,9 @@ impl SupportedFormat {
         }
 
         const HZ_44100: SampleRate = SampleRate(44_100);
-        let r44100_in_self = self.min_sample_rate <= HZ_44100
-            && HZ_44100 <= self.max_sample_rate;
-        let r44100_in_other = other.min_sample_rate <= HZ_44100
-            && HZ_44100 <= other.max_sample_rate;
+        let r44100_in_self = self.min_sample_rate <= HZ_44100 && HZ_44100 <= self.max_sample_rate;
+        let r44100_in_other =
+            other.min_sample_rate <= HZ_44100 && HZ_44100 <= other.max_sample_rate;
         let cmp_r44100 = r44100_in_self.cmp(&r44100_in_other);
         if cmp_r44100 != Equal {
             return cmp_r44100;
@@ -580,7 +582,8 @@ impl SupportedFormat {
 }
 
 impl<'a, T> Deref for InputBuffer<'a, T>
-    where T: Sample
+where
+    T: Sample,
 {
     type Target = [T];
 
@@ -591,7 +594,8 @@ impl<'a, T> Deref for InputBuffer<'a, T>
 }
 
 impl<'a, T> Drop for InputBuffer<'a, T>
-    where T: Sample
+where
+    T: Sample,
 {
     #[inline]
     fn drop(&mut self) {
@@ -600,7 +604,8 @@ impl<'a, T> Drop for InputBuffer<'a, T>
 }
 
 impl<'a, T> Deref for OutputBuffer<'a, T>
-    where T: Sample
+where
+    T: Sample,
 {
     type Target = [T];
 
@@ -611,7 +616,8 @@ impl<'a, T> Deref for OutputBuffer<'a, T>
 }
 
 impl<'a, T> DerefMut for OutputBuffer<'a, T>
-    where T: Sample
+where
+    T: Sample,
 {
     #[inline]
     fn deref_mut(&mut self) -> &mut [T] {
@@ -620,7 +626,8 @@ impl<'a, T> DerefMut for OutputBuffer<'a, T>
 }
 
 impl<'a, T> Drop for OutputBuffer<'a, T>
-    where T: Sample
+where
+    T: Sample,
 {
     #[inline]
     fn drop(&mut self) {
