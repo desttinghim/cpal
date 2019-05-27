@@ -619,7 +619,9 @@ impl EventLoop {
             }
             let hw_params = HwParams::alloc();
 
-            set_hw_params_from_format(capture_handle, &hw_params, format);
+            if let Err(e) = set_hw_params_from_format(capture_handle, &hw_params, format) {
+                return Err(CreationError::InvalidParameters);
+            }
 
             let can_pause = alsa::snd_pcm_hw_params_can_pause(hw_params.0) == 1;
 
@@ -676,7 +678,9 @@ impl EventLoop {
             }
             let hw_params = HwParams::alloc();
 
-            set_hw_params_from_format(playback_handle, &hw_params, format);
+            if let Err(e) = set_hw_params_from_format(playback_handle, &hw_params, format) {
+                return Err(CreationError::InvalidParameters);
+            }
 
             let can_pause = alsa::snd_pcm_hw_params_can_pause(hw_params.0) == 1;
 
@@ -736,7 +740,7 @@ impl EventLoop {
 
 unsafe fn set_hw_params_from_format(
     pcm_handle: *mut alsa::snd_pcm_t, hw_params: &HwParams, format: &Format,
-) {
+) -> Result<(), String> {
     check_errors(alsa::snd_pcm_hw_params_any(pcm_handle, hw_params.0))
         .expect("Errors on pcm handle");
     check_errors(alsa::snd_pcm_hw_params_set_access(
@@ -788,8 +792,10 @@ unsafe fn set_hw_params_from_format(
         &mut max_buffer_size,
     ))
     .unwrap();
-    check_errors(alsa::snd_pcm_hw_params(pcm_handle, hw_params.0))
-        .expect("hardware params could not be set");
+    if let Err(e) = check_errors(alsa::snd_pcm_hw_params(pcm_handle, hw_params.0)) {
+        return Err("hardware params could not be set".to_string());
+    }
+    Ok(())
 }
 
 unsafe fn set_sw_params_from_format(

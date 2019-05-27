@@ -311,6 +311,8 @@ pub enum CreationError {
     DeviceNotAvailable,
     /// The required format is not supported.
     FormatNotSupported,
+    /// Invalid parameters sent to native library; most likely because the sound device is not supported.
+    InvalidParameters,
 }
 
 /// An iterator yielding all `Device`s currently available to the system.
@@ -748,6 +750,10 @@ impl Error for CreationError {
 
             &CreationError::FormatNotSupported => {
                 "The requested samples format is not supported by the device."
+            },
+
+            &CreationError::InvalidParameters => {
+                "Invalid parameters sent to device (it is likely not currently supported)."
             },
         }
     }
